@@ -1,0 +1,91 @@
+using UnityEngine;
+using System.Collections;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+using System.Collections.Generic;
+
+public enum ToCompareSize{
+	大于,
+	等于,
+	小于
+}
+
+[System.Serializable]
+public class IfCommand :Command {
+
+	public string compareKey;
+	public VarType var_type;
+	public bool compareBool;
+	public int compareInt;
+
+	[SerializeField]private int selectedIndex=0;
+	public int goEventIndex=0;
+
+	public ToCompareSize sizeType;
+
+	string[] boolPops;
+	string[] intPops;
+
+	public override IEnumerator Run ()
+	{
+		if (var_type == VarType.BOOL) {
+			if (EventVar.boolDic [compareKey] == compareBool) {
+				Eve.commandIndex = goEventIndex - 1;
+			}
+				
+		}
+		else {
+			switch (sizeType) {
+			case ToCompareSize.大于:
+				if (EventVar.intDic [compareKey] > compareInt)
+					Eve.commandIndex = goEventIndex - 1;
+				break;
+			case ToCompareSize.等于:
+				if (EventVar.intDic [compareKey] == compareInt)
+					Eve.commandIndex = goEventIndex - 1;
+				break;
+			case ToCompareSize.小于:
+				if (EventVar.intDic [compareKey] < compareInt)
+					Eve.commandIndex = goEventIndex - 1;
+				break;
+			default:
+				break;
+			}
+		}
+		yield return null;
+
+	}
+	#if UNITY_EDITOR
+	public override void Draw ()
+	{
+		EditorGUILayout.BeginHorizontal ();
+		var_type = (VarType)EditorGUILayout.EnumPopup ("对比类型", var_type);
+		EditorGUILayout.EndHorizontal ();
+
+		List<string> boolKeys = new List<string> (EventVar.boolDic.Keys);
+		boolPops = boolKeys.ToArray ();
+		List<string> intKeys = new List<string> (EventVar.intDic.Keys);
+		intPops = intKeys.ToArray ();
+
+		if (var_type == VarType.BOOL && boolPops != null) {
+			EditorGUILayout.BeginHorizontal ();
+
+			selectedIndex = EditorGUILayout.Popup (selectedIndex, boolPops);
+			compareBool = EditorGUILayout.Toggle (compareBool);
+			compareKey = boolPops [selectedIndex];
+			EditorGUILayout.EndHorizontal();
+		} else if (var_type == VarType.INT && intPops != null) {
+			
+			EditorGUILayout.BeginHorizontal ();
+			selectedIndex = EditorGUILayout.Popup (selectedIndex, intPops);
+			sizeType = (ToCompareSize)EditorGUILayout.EnumPopup ("条件",sizeType);
+			compareInt = EditorGUILayout.IntField (compareInt);
+			compareKey = intPops [selectedIndex];
+			EditorGUILayout.EndHorizontal();
+		}
+		goEventIndex = EditorGUILayout.IntField ("跳转到的事件下标", goEventIndex);
+
+	}
+	#endif
+}
